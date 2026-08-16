@@ -2,184 +2,277 @@
 
 This project implements a Physics-Informed Neural Network (PINN) in PyTorch to approximate the solution of the one-dimensional viscous Burgers equation.
 
-The Burgers equation provides a compact nonlinear model combining convection and diffusion and is commonly used as a benchmark problem for studying numerical methods and physics-informed machine learning approaches for partial differential equations.
+The Burgers equation is a canonical nonlinear partial differential equation that combines nonlinear convection and viscous diffusion. It provides a useful benchmark for studying numerical methods and physics-informed machine learning techniques for time-dependent PDEs.
 
-## Governing Equation
+---
 
-The viscous Burgers equation considered here is
+## 1. Problem Formulation
 
-\[
+The one-dimensional viscous Burgers equation is
+
+$$
 \frac{\partial u}{\partial t}
 +
 u\frac{\partial u}{\partial x}
 -
 \nu\frac{\partial^2 u}{\partial x^2}
-=0,
-\]
+=
+0,
+$$
 
-with kinematic viscosity
+where $u(t,x)$ is the unknown solution and $\nu$ is the kinematic viscosity.
 
-\[
-\nu=\frac{0.01}{\pi}.
-\]
+For this implementation,
+
+$$
+\nu = \frac{0.01}{\pi}.
+$$
 
 The computational domain is
 
-\[
-x\in[-1,1],
+$$
+x \in [-1,1],
 \qquad
-t\in[0,1].
-\]
+t \in [0,1].
+$$
 
-## Initial and Boundary Conditions
+---
 
-The initial condition is
+## 2. Initial and Boundary Conditions
 
-\[
-u(0,x)=-\sin(\pi x),
-\]
+The prescribed initial condition is
 
-while homogeneous Dirichlet boundary conditions are imposed at both ends of the spatial domain:
+$$
+u(0,x) = -\sin(\pi x).
+$$
 
-\[
+Homogeneous Dirichlet boundary conditions are imposed at both ends of the spatial domain:
+
+$$
 u(t,-1)=0,
-\qquad
+$$
+
+$$
 u(t,1)=0.
-\]
+$$
 
-## Physics-Informed Neural Network
+Therefore, the PINN must simultaneously satisfy the governing PDE, the initial condition, and both boundary conditions.
 
-The neural network approximates the solution
+---
 
-\[
-(t,x)\longrightarrow u(t,x).
-\]
+## 3. Physics-Informed Neural Network
 
-The implementation uses a fully connected feed-forward network with:
+The neural network approximates the continuous mapping
 
-- 2 input variables: \(t\) and \(x\)
-- 5 hidden layers
-- 40 neurons per hidden layer
-- `Tanh` activation functions
-- 1 output variable: \(u\)
-- Xavier normal weight initialization
-- normalized network inputs
+$$
+(t,x)
+\longmapsto
+u(t,x).
+$$
 
-Automatic differentiation provided by PyTorch is used to evaluate the derivatives required by the governing equation.
+The implemented fully connected neural network contains:
 
-## Physics-Informed Loss
+- **Inputs:** $t$ and $x$
+- **Hidden layers:** 5
+- **Neurons per hidden layer:** 40
+- **Activation function:** `Tanh`
+- **Output:** $u(t,x)$
+- **Weight initialization:** Xavier normal initialization
+- **Input preprocessing:** normalization using the problem-domain bounds
 
-The PDE residual is defined as
+PyTorch automatic differentiation is used to evaluate all derivatives required by the governing equation.
 
-\[
-f(t,x)=
-u_t
-+
-u\,u_x
--
-\nu u_{xx}.
-\]
+---
 
-The total training objective combines the initial/boundary-condition loss and the PDE residual loss:
+## 4. Physics-Informed PDE Residual
 
-\[
-\mathcal{L}
+For a network prediction $u_\theta(t,x)$, the Burgers-equation residual is defined as
+
+$$
+f_\theta(t,x)
 =
-\mathcal{L}_{IC+BC}
+\frac{\partial u_\theta}{\partial t}
 +
-\mathcal{L}_{PDE}.
-\]
+u_\theta
+\frac{\partial u_\theta}{\partial x}
+-
+\nu
+\frac{\partial^2 u_\theta}{\partial x^2}.
+$$
 
-The PDE contribution is
+A physics-informed solution should satisfy
 
-\[
-\mathcal{L}_{PDE}
+$$
+f_\theta(t,x) \approx 0
+$$
+
+throughout the computational domain.
+
+The PDE loss is defined as the mean squared residual over the collocation points:
+
+$$
+\mathcal{L}_{\mathrm{PDE}}
 =
 \frac{1}{N_c}
 \sum_{i=1}^{N_c}
-f(t_i,x_i)^2.
-\]
+\left[
+f_\theta(t_i,x_i)
+\right]^2.
+$$
 
-The initial and boundary conditions are enforced through corresponding mean-squared-error terms.
+---
 
-## Training Points
+## 5. Initial- and Boundary-Condition Loss
 
-Latin Hypercube Sampling (LHS) is used to distribute training points across the problem domain.
+The initial-condition contribution is
 
-| Point Type | Number of Points |
+$$
+\mathcal{L}_{\mathrm{IC}}
+=
+\frac{1}{N_i}
+\sum_{i=1}^{N_i}
+\left[
+u_\theta(0,x_i)
++
+\sin(\pi x_i)
+\right]^2.
+$$
+
+The boundary-condition contribution is evaluated from the prescribed zero values at $x=-1$ and $x=1$.
+
+The implementation combines the initial- and boundary-condition terms as
+
+$$
+\mathcal{L}_{\mathrm{IC+BC}}.
+$$
+
+The complete training objective is therefore
+
+$$
+\boxed{
+\mathcal{L}
+=
+\mathcal{L}_{\mathrm{IC+BC}}
++
+\mathcal{L}_{\mathrm{PDE}}
+}
+$$
+
+which couples the available physical constraints directly to neural-network optimization.
+
+---
+
+## 6. Training-Point Sampling
+
+Latin Hypercube Sampling (LHS) is used to distribute training points across the space-time domain.
+
+| Point Set | Number of Points |
 |---|---:|
 | Initial-condition points | 1,000 |
-| Boundary points at \(x=-1\) | 1,000 |
-| Boundary points at \(x=1\) | 1,000 |
+| Boundary points at $x=-1$ | 1,000 |
+| Boundary points at $x=1$ | 1,000 |
 | Interior collocation points | 10,000 |
 
-The collocation points are used to enforce the Burgers equation throughout the interior of the space-time domain.
+The collocation points are used exclusively to enforce the differential equation inside the domain.
 
-## Optimization
+---
 
-Training is performed in two stages.
+## 7. Optimization Strategy
 
-First, the network is optimized using Adam:
+Training is performed sequentially using two optimizers.
+
+### Stage 1 — Adam
+
+The first stage uses Adam with
 
 - Learning rate: `0.001`
 - Iterations: `1000`
 
-The Adam stage is followed by L-BFGS optimization using a strong-Wolfe line search. This second optimization stage is used to further reduce the physics-informed objective.
+Adam provides the initial parameter optimization before switching to a quasi-Newton method.
 
-## Results
+### Stage 2 — L-BFGS
 
-The trained PINN produces a continuous approximation of \(u(t,x)\) over the full space-time domain.
+The second stage uses PyTorch's L-BFGS optimizer with
 
-### Predicted Solution Field
+- Maximum iterations: `10000`
+- Maximum function evaluations: `10000`
+- History size: `100`
+- Line search: `strong_wolfe`
+
+This hybrid Adam–L-BFGS strategy is commonly useful in PINN optimization because the two methods provide complementary optimization behavior.
+
+---
+
+## 8. Predicted Solution
+
+### Space-Time Solution Field
+
+The trained network provides a continuous approximation of $u(t,x)$ across the computational domain.
 
 ![PINN solution field](figures/solution-field.png)
 
-The solution field illustrates the evolution of the initial sinusoidal profile under the combined effects of nonlinear convection and viscous diffusion.
+The field shows the evolution of the initially sinusoidal profile under the combined effects of nonlinear convection and viscosity.
+
+---
 
 ### Solution Cross-Sections
 
+Predicted spatial profiles are shown at
+
+$$
+t =
+0,\;
+0.2,\;
+0.45,\;
+0.75,\;
+1.0.
+$$
+
 ![Solution cross-sections](figures/solution-cross-sections.png)
 
-Cross-sections of the PINN prediction are shown at
+At $t=0$, the PINN prediction is compared with the prescribed analytical initial condition
 
-\[
-t=0,\ 0.2,\ 0.45,\ 0.75,\ 1.0.
-\]
-
-At \(t=0\), the PINN prediction is compared with the prescribed analytical initial condition
-
-\[
+$$
 u(0,x)=-\sin(\pi x).
-\]
+$$
 
-The notebook does not include an analytical or external reference solution for later times, so the remaining cross-sections represent PINN predictions rather than quantitative comparisons against an exact solution.
+The current implementation does **not** include an analytical or independent numerical reference solution for $t>0$. Therefore, the later profiles are presented as PINN predictions rather than as validated exact-solution comparisons.
 
-### Training Loss
+---
+
+## 9. Training-Loss History
+
+The optimization history separately tracks
+
+- initial- and boundary-condition loss;
+- PDE residual loss.
 
 ![Training loss history](figures/training-loss-history.png)
 
-The loss history tracks the two principal components of the optimization objective:
+The reduction of both components indicates progressive enforcement of the prescribed conditions and the Burgers-equation residual during optimization.
 
-- initial and boundary condition loss
-- PDE residual loss
+---
 
-## Implementation
+## 10. Technologies
 
-The implementation is based on:
+The implementation uses:
 
 - Python
 - PyTorch
 - NumPy
 - Matplotlib
 - pyDOE
-- automatic differentiation
+- Jupyter Notebook
+- Automatic Differentiation
 - Latin Hypercube Sampling
-- Adam optimization
-- L-BFGS optimization
+- Adam
+- L-BFGS
 
-GPU acceleration is used automatically when CUDA is available.
+CUDA acceleration is selected automatically when an available GPU is detected.
 
-## Repository Contents
+---
+
+## 11. Repository Contents
 
 ```text
 01-viscous-burgers-equation/
@@ -191,19 +284,38 @@ GPU acceleration is used automatically when CUDA is available.
     └── training-loss-history.png
 ```
 
-The Jupyter notebook contains the complete PINN implementation, including sampling, neural-network construction, physics-informed loss evaluation, optimization, prediction, and visualization.
+The notebook contains the complete workflow, including sampling, network construction, physics-informed residual evaluation, optimization, prediction, and visualization.
 
-## Methodological Notes
+---
 
-This implementation is intended as a computational study of the PINN formulation for a nonlinear time-dependent PDE.
+## 12. Methodological Notes
 
-The generated solution satisfies the governing equation through residual minimization together with the prescribed initial and boundary conditions. However, no independent numerical benchmark or full analytical reference solution is used in the current notebook to quantify the prediction error throughout the complete space-time domain.
+This implementation is intended as a computational study of Physics-Informed Neural Networks for a nonlinear time-dependent PDE.
 
-Consequently, the presented results should be interpreted as physics-informed predictions rather than as a fully benchmark-validated numerical solution.
+The model is constrained through:
 
-## Possible Extensions
+1. the governing Burgers equation;
+2. the prescribed initial condition;
+3. the spatial boundary conditions.
 
-Potential extensions include quantitative comparison against a high-resolution numerical reference solution, relative error analysis, sensitivity studies with respect to collocation-point density and network architecture, adaptive residual-based sampling, optimizer comparisons, and investigation of PINN performance at lower viscosity values.
+However, the current implementation does not contain a high-resolution numerical benchmark or a full analytical reference solution for quantitative error evaluation throughout the space-time domain.
+
+Accordingly, the results are reported as **physics-informed predictions** rather than as a fully benchmark-validated numerical solution.
+
+---
+
+## 13. Potential Extensions
+
+Future extensions could include:
+
+- comparison with a high-resolution finite-difference or spectral solution;
+- relative $L_2$ error evaluation;
+- adaptive residual-based collocation sampling;
+- sensitivity analysis with respect to network depth and width;
+- optimizer comparisons;
+- loss-weighting strategies;
+- studies at lower viscosity values;
+- analysis of PINN behavior near steep solution gradients.
 
 ---
 
