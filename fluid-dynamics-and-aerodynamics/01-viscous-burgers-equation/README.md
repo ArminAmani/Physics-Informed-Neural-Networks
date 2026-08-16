@@ -1,4 +1,4 @@
-﻿# Physics-Informed Neural Network for the Viscous Burgers Equation
+# Physics-Informed Neural Network for the Viscous Burgers Equation
 
 This project implements a Physics-Informed Neural Network (PINN) in PyTorch to approximate the solution of the one-dimensional viscous Burgers equation.
 
@@ -10,7 +10,7 @@ The Burgers equation is a canonical nonlinear partial differential equation that
 
 The one-dimensional viscous Burgers equation is
 
-$$
+```math
 \frac{\partial u}{\partial t}
 +
 u\frac{\partial u}{\partial x}
@@ -18,23 +18,23 @@ u\frac{\partial u}{\partial x}
 \nu\frac{\partial^2 u}{\partial x^2}
 =
 0,
-$$
+```
 
 where $u(t,x)$ is the unknown solution and $\nu$ is the kinematic viscosity.
 
 For this implementation,
 
-$$
+```math
 \nu = \frac{0.01}{\pi}.
-$$
+```
 
 The computational domain is
 
-$$
+```math
 x \in [-1,1],
 \qquad
 t \in [0,1].
-$$
+```
 
 ---
 
@@ -42,19 +42,19 @@ $$
 
 The prescribed initial condition is
 
-$$
+```math
 u(0,x) = -\sin(\pi x).
-$$
+```
 
 Homogeneous Dirichlet boundary conditions are imposed at both ends of the spatial domain:
 
-$$
+```math
 u(t,-1)=0,
-$$
+```
 
-$$
+```math
 u(t,1)=0.
-$$
+```
 
 Therefore, the PINN must simultaneously satisfy the governing PDE, the initial condition, and both boundary conditions.
 
@@ -64,11 +64,11 @@ Therefore, the PINN must simultaneously satisfy the governing PDE, the initial c
 
 The neural network approximates the continuous mapping
 
-$$
+```math
 (t,x)
 \longmapsto
 u(t,x).
-$$
+```
 
 The implemented fully connected neural network contains:
 
@@ -88,7 +88,7 @@ PyTorch automatic differentiation is used to evaluate all derivatives required b
 
 For a network prediction $u_\theta(t,x)$, the Burgers-equation residual is defined as
 
-$$
+```math
 f_\theta(t,x)
 =
 \frac{\partial u_\theta}{\partial t}
@@ -98,19 +98,19 @@ u_\theta
 -
 \nu
 \frac{\partial^2 u_\theta}{\partial x^2}.
-$$
+```
 
 A physics-informed solution should satisfy
 
-$$
+```math
 f_\theta(t,x) \approx 0
-$$
+```
 
 throughout the computational domain.
 
 The PDE loss is defined as the mean squared residual over the collocation points:
 
-$$
+```math
 \mathcal{L}_{\mathrm{PDE}}
 =
 \frac{1}{N_c}
@@ -118,7 +118,7 @@ $$
 \left[
 f_\theta(t_i,x_i)
 \right]^2.
-$$
+```
 
 ---
 
@@ -126,7 +126,7 @@ $$
 
 The initial-condition contribution is
 
-$$
+```math
 \mathcal{L}_{\mathrm{IC}}
 =
 \frac{1}{N_i}
@@ -136,19 +136,19 @@ u_\theta(0,x_i)
 +
 \sin(\pi x_i)
 \right]^2.
-$$
+```
 
 The boundary-condition contribution is evaluated from the prescribed zero values at $x=-1$ and $x=1$.
 
 The implementation combines the initial- and boundary-condition terms as
 
-$$
+```math
 \mathcal{L}_{\mathrm{IC+BC}}.
-$$
+```
 
 The complete training objective is therefore
 
-$$
+```math
 \boxed{
 \mathcal{L}
 =
@@ -156,7 +156,7 @@ $$
 +
 \mathcal{L}_{\mathrm{PDE}}
 }
-$$
+```
 
 which couples the available physical constraints directly to neural-network optimization.
 
@@ -219,22 +219,22 @@ The field shows the evolution of the initially sinusoidal profile under the comb
 
 Predicted spatial profiles are shown at
 
-$$
+```math
 t =
 0,\;
 0.2,\;
 0.45,\;
 0.75,\;
 1.0.
-$$
+```
 
 ![Solution cross-sections](figures/solution-cross-sections.png)
 
 At $t=0$, the PINN prediction is compared with the prescribed analytical initial condition
 
-$$
+```math
 u(0,x)=-\sin(\pi x).
-$$
+```
 
 The current implementation does **not** include an analytical or independent numerical reference solution for $t>0$. Therefore, the later profiles are presented as PINN predictions rather than as validated exact-solution comparisons.
 

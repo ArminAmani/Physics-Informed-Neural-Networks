@@ -1,4 +1,4 @@
-﻿# Physics-Informed Neural Network for Lid-Driven Cavity Flow
+# Physics-Informed Neural Network for Lid-Driven Cavity Flow
 
 This project applies a Physics-Informed Neural Network (PINN) to the steady two-dimensional incompressible lid-driven cavity problem.
 
@@ -10,39 +10,39 @@ The lid-driven cavity is a classical computational fluid dynamics benchmark char
 
 The computational domain is a unit square:
 
-$$
+```math
 (x,y)\in[0,1]\times[0,1].
-$$
+```
 
 The upper wall moves horizontally with velocity
 
-$$
+```math
 U_{\mathrm{lid}} = 1,
-$$
+```
 
 while the left, right, and bottom walls remain stationary.
 
 The kinematic viscosity is
 
-$$
+```math
 \nu = 0.01.
-$$
+```
 
 Using the cavity length $L=1$, the Reynolds number is
 
-$$
+```math
 Re
 =
 \frac{U_{\mathrm{lid}}L}{\nu}
 =
 100.
-$$
+```
 
 The problem is therefore solved at
 
-$$
+```math
 \boxed{Re=100}
-$$
+```
 
 using a physics-informed neural-network formulation.
 
@@ -54,7 +54,7 @@ The PINN enforces the dimensionless steady incompressible Navierâ€“Stokes e
 
 The network predicts the three flow variables
 
-$$
+```math
 (x,y)
 \longmapsto
 \left(
@@ -62,7 +62,7 @@ u(x,y),
 v(x,y),
 p(x,y)
 \right),
-$$
+```
 
 where:
 
@@ -74,7 +74,7 @@ where:
 
 Mass conservation for incompressible flow requires
 
-$$
+```math
 \boxed{
 \frac{\partial u}{\partial x}
 +
@@ -82,7 +82,7 @@ $$
 =
 0
 }
-$$
+```
 
 throughout the fluid domain.
 
@@ -90,7 +90,7 @@ throughout the fluid domain.
 
 The horizontal momentum equation is
 
-$$
+```math
 \boxed{
 u\frac{\partial u}{\partial x}
 +
@@ -107,13 +107,13 @@ v\frac{\partial u}{\partial y}
 =
 0
 }
-$$
+```
 
 ### y-Momentum Equation
 
 The vertical momentum equation is
 
-$$
+```math
 \boxed{
 u\frac{\partial v}{\partial x}
 +
@@ -130,7 +130,7 @@ v\frac{\partial v}{\partial y}
 =
 0
 }
-$$
+```
 
 All required first- and second-order derivatives are calculated using PyTorch automatic differentiation.
 
@@ -140,23 +140,23 @@ All required first- and second-order derivatives are calculated using PyTorch au
 
 The left, right, and bottom walls satisfy the no-slip condition:
 
-$$
+```math
 u=0,
 \qquad
 v=0.
-$$
+```
 
 The moving upper lid satisfies
 
-$$
+```math
 u=U_{\mathrm{lid}}=1,
 \qquad
 v=0.
-$$
+```
 
 Thus, the velocity boundary conditions are
 
-$$
+```math
 \begin{aligned}
 u(0,y) &= 0,
 &
@@ -174,7 +174,7 @@ u(x,1) &= 1,
 &
 v(x,1) &= 0.
 \end{aligned}
-$$
+```
 
 No explicit pressure-reference condition is imposed in the current implementation.
 
@@ -184,11 +184,11 @@ No explicit pressure-reference condition is imposed in the current implementatio
 
 The neural network represents the mapping
 
-$$
+```math
 (x,y)
 \longmapsto
 (u,v,p).
-$$
+```
 
 The implemented fully connected architecture contains:
 
@@ -210,17 +210,17 @@ Three PDE residuals are evaluated at interior collocation points.
 
 ### Continuity Residual
 
-$$
+```math
 r_c
 =
 \frac{\partial u}{\partial x}
 +
 \frac{\partial v}{\partial y}.
-$$
+```
 
 ### x-Momentum Residual
 
-$$
+```math
 r_x
 =
 u\frac{\partial u}{\partial x}
@@ -235,11 +235,11 @@ v\frac{\partial u}{\partial y}
 +
 \frac{\partial^2u}{\partial y^2}
 \right).
-$$
+```
 
 ### y-Momentum Residual
 
-$$
+```math
 r_y
 =
 u\frac{\partial v}{\partial x}
@@ -254,11 +254,11 @@ v\frac{\partial v}{\partial y}
 +
 \frac{\partial^2v}{\partial y^2}
 \right).
-$$
+```
 
 The corresponding PDE loss is
 
-$$
+```math
 \mathcal{L}_{\mathrm{PDE}}
 =
 \mathcal{L}_{c}
@@ -266,29 +266,29 @@ $$
 \mathcal{L}_{x}
 +
 \mathcal{L}_{y},
-$$
+```
 
 where
 
-$$
+```math
 \mathcal{L}_{c}
 =
 \operatorname{MSE}(r_c),
-$$
+```
 
-$$
+```math
 \mathcal{L}_{x}
 =
 \operatorname{MSE}(r_x),
-$$
+```
 
 and
 
-$$
+```math
 \mathcal{L}_{y}
 =
 \operatorname{MSE}(r_y).
-$$
+```
 
 ---
 
@@ -296,7 +296,7 @@ $$
 
 The velocity boundary-condition loss is
 
-$$
+```math
 \mathcal{L}_{\mathrm{BC}}
 =
 \operatorname{MSE}
@@ -308,11 +308,11 @@ u_{\theta}-u_{\mathrm{BC}}
 \left(
 v_{\theta}-v_{\mathrm{BC}}
 \right).
-$$
+```
 
 The total training objective is
 
-$$
+```math
 \boxed{
 \mathcal{L}
 =
@@ -320,11 +320,11 @@ $$
 +
 \mathcal{L}_{\mathrm{PDE}}
 }
-$$
+```
 
 or, equivalently,
 
-$$
+```math
 \boxed{
 \mathcal{L}
 =
@@ -336,7 +336,7 @@ $$
 +
 \mathcal{L}_{y}
 }
-$$
+```
 
 ---
 
@@ -386,9 +386,9 @@ The L-BFGS stage further minimizes the combined PDE and boundary-condition resid
 
 The trained PINN is evaluated on a
 
-$$
+```math
 100\times100
-$$
+```
 
 Cartesian grid covering the cavity.
 
@@ -410,23 +410,23 @@ The predicted velocity field develops a dominant recirculating motion inside the
 
 The present formulation does not impose an explicit pressure reference such as
 
-$$
+```math
 p(x_0,y_0)=0.
-$$
+```
 
 For incompressible Navierâ€“Stokes flow, the momentum equations determine pressure through its spatial gradients:
 
-$$
+```math
 \nabla p.
-$$
+```
 
 Therefore, the pressure field is defined only up to an arbitrary additive constant:
 
-$$
+```math
 p^{*}(x,y)
 =
 p(x,y)+C.
-$$
+```
 
 Consequently, the absolute pressure level shown in the visualization should not be interpreted as a uniquely defined reference pressure.
 
