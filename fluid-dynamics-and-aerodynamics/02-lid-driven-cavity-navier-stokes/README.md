@@ -1,4 +1,4 @@
-# Physics-Informed Neural Network for Lid-Driven Cavity Flow
+﻿# Physics-Informed Neural Network for Lid-Driven Cavity Flow
 
 This project applies a Physics-Informed Neural Network (PINN) to the steady two-dimensional incompressible lid-driven cavity problem.
 
@@ -50,7 +50,7 @@ using a physics-informed neural-network formulation.
 
 ## 2. Governing Equations
 
-The PINN enforces the dimensionless steady incompressible Navier–Stokes equations.
+The PINN enforces the dimensionless steady incompressible Navierâ€“Stokes equations.
 
 The network predicts the three flow variables
 
@@ -192,11 +192,11 @@ $$
 
 The implemented fully connected architecture contains:
 
-- **Inputs:** 2 — $x$ and $y$
+- **Inputs:** 2 â€” $x$ and $y$
 - **Hidden layers:** 9
 - **Neurons per hidden layer:** 30
 - **Activation function:** `Tanh`
-- **Outputs:** 3 — $u$, $v$, and $p$
+- **Outputs:** 3 â€” $u$, $v$, and $p$
 - **Weight initialization:** Xavier normal initialization
 - **Input preprocessing:** normalization using the domain bounds
 
@@ -361,7 +361,7 @@ The collocation points enforce the governing equations throughout the two-dimens
 
 Training is performed in two stages.
 
-### Stage 1 — Adam
+### Stage 1 â€” Adam
 
 The first stage uses
 
@@ -369,7 +369,7 @@ The first stage uses
 - Learning rate: `0.001`
 - Iterations: `1000`
 
-### Stage 2 — L-BFGS
+### Stage 2 â€” L-BFGS
 
 The second stage uses PyTorch's L-BFGS optimizer with
 
@@ -414,7 +414,7 @@ $$
 p(x_0,y_0)=0.
 $$
 
-For incompressible Navier–Stokes flow, the momentum equations determine pressure through its spatial gradients:
+For incompressible Navierâ€“Stokes flow, the momentum equations determine pressure through its spatial gradients:
 
 $$
 \nabla p.
@@ -473,10 +473,10 @@ CUDA acceleration is used automatically when an available GPU is detected.
 
 ```text
 02-lid-driven-cavity-navier-stokes/
-├── README.md
-├── lid-driven-cavity-pinn.ipynb
-└── figures/
-    └── lid-driven-cavity-results.png
+â”œâ”€â”€ README.md
+â”œâ”€â”€ lid-driven-cavity-pinn.ipynb
+â””â”€â”€ figures/
+    â””â”€â”€ lid-driven-cavity-results.png
 ```
 
 The notebook contains the complete workflow from point generation and neural-network construction to physics-informed training, flow-field prediction, visualization, and model-state saving.
@@ -485,7 +485,7 @@ The notebook contains the complete workflow from point generation and neural-net
 
 ## 14. Methodological Notes
 
-This project demonstrates a PINN formulation for the steady incompressible Navier–Stokes equations at $Re=100$.
+This project demonstrates a PINN formulation for the steady incompressible Navierâ€“Stokes equations at $Re=100$.
 
 The current implementation does not include:
 

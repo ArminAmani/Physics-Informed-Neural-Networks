@@ -1,4 +1,4 @@
-# Physics-Informed Neural Network for the Viscous Burgers Equation
+﻿# Physics-Informed Neural Network for the Viscous Burgers Equation
 
 This project implements a Physics-Informed Neural Network (PINN) in PyTorch to approximate the solution of the one-dimensional viscous Burgers equation.
 
@@ -181,7 +181,7 @@ The collocation points are used exclusively to enforce the differential equation
 
 Training is performed sequentially using two optimizers.
 
-### Stage 1 — Adam
+### Stage 1 â€” Adam
 
 The first stage uses Adam with
 
@@ -190,7 +190,7 @@ The first stage uses Adam with
 
 Adam provides the initial parameter optimization before switching to a quasi-Newton method.
 
-### Stage 2 — L-BFGS
+### Stage 2 â€” L-BFGS
 
 The second stage uses PyTorch's L-BFGS optimizer with
 
@@ -199,7 +199,7 @@ The second stage uses PyTorch's L-BFGS optimizer with
 - History size: `100`
 - Line search: `strong_wolfe`
 
-This hybrid Adam–L-BFGS strategy is commonly useful in PINN optimization because the two methods provide complementary optimization behavior.
+This hybrid Adamâ€“L-BFGS strategy is commonly useful in PINN optimization because the two methods provide complementary optimization behavior.
 
 ---
 
@@ -276,12 +276,12 @@ CUDA acceleration is selected automatically when an available GPU is detected.
 
 ```text
 01-viscous-burgers-equation/
-├── README.md
-├── viscous-burgers-pinn.ipynb
-└── figures/
-    ├── solution-cross-sections.png
-    ├── solution-field.png
-    └── training-loss-history.png
+â”œâ”€â”€ README.md
+â”œâ”€â”€ viscous-burgers-pinn.ipynb
+â””â”€â”€ figures/
+    â”œâ”€â”€ solution-cross-sections.png
+    â”œâ”€â”€ solution-field.png
+    â””â”€â”€ training-loss-history.png
 ```
 
 The notebook contains the complete workflow, including sampling, network construction, physics-informed residual evaluation, optimization, prediction, and visualization.
