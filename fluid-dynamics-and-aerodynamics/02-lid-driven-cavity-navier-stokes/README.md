@@ -2,22 +2,22 @@
 
 This project applies a Physics-Informed Neural Network (PINN) to the steady two-dimensional incompressible lid-driven cavity problem.
 
-The lid-driven cavity is a classical computational fluid dynamics benchmark characterized by a moving upper wall that drives a recirculating viscous flow inside a closed square domain.
+The lid-driven cavity is a classical computational fluid dynamics benchmark in which the motion of the upper wall drives a recirculating viscous flow inside a closed square domain.
 
 ---
 
 ## 1. Physical Problem
 
-The computational domain is a unit square:
+The computational domain is the unit square:
 
 ```math
-(x,y)\in[0,1]\times[0,1].
+(x,y) \in [0,1] \times [0,1]
 ```
 
 The upper wall moves horizontally with velocity
 
 ```math
-U_{\mathrm{lid}} = 1,
+U_{\mathrm{lid}} = 1
 ```
 
 while the left, right, and bottom walls remain stationary.
@@ -25,34 +25,28 @@ while the left, right, and bottom walls remain stationary.
 The kinematic viscosity is
 
 ```math
-\nu = 0.01.
+\nu = 0.01
 ```
 
-Using the cavity length $L=1$, the Reynolds number is
+Using a characteristic cavity length of `L = 1`, the Reynolds number is
 
 ```math
 Re
 =
 \frac{U_{\mathrm{lid}}L}{\nu}
 =
-100.
+100
 ```
 
-The problem is therefore solved at
-
-```math
-\boxed{Re=100}
-```
-
-using a physics-informed neural-network formulation.
+Therefore, the present problem is solved at `Re = 100`.
 
 ---
 
 ## 2. Governing Equations
 
-The PINN enforces the dimensionless steady incompressible Navierâ€“Stokes equations.
+The PINN enforces the steady two-dimensional incompressible Navier-Stokes equations.
 
-The network predicts the three flow variables
+The neural network predicts the flow variables
 
 ```math
 (x,y)
@@ -61,37 +55,32 @@ The network predicts the three flow variables
 u(x,y),
 v(x,y),
 p(x,y)
-\right),
+\right)
 ```
 
 where:
 
-- $u$ is the horizontal velocity component;
-- $v$ is the vertical velocity component;
-- $p$ is the pressure field.
+- `u` is the horizontal velocity component.
+- `v` is the vertical velocity component.
+- `p` is the pressure field.
 
 ### Continuity Equation
 
-Mass conservation for incompressible flow requires
+Conservation of mass for incompressible flow requires
 
 ```math
-\boxed{
 \frac{\partial u}{\partial x}
 +
 \frac{\partial v}{\partial y}
 =
 0
-}
 ```
-
-throughout the fluid domain.
 
 ### x-Momentum Equation
 
 The horizontal momentum equation is
 
 ```math
-\boxed{
 u\frac{\partial u}{\partial x}
 +
 v\frac{\partial u}{\partial y}
@@ -100,13 +89,12 @@ v\frac{\partial u}{\partial y}
 -
 \frac{1}{Re}
 \left(
-\frac{\partial^2 u}{\partial x^2}
+\frac{\partial^2u}{\partial x^2}
 +
-\frac{\partial^2 u}{\partial y^2}
+\frac{\partial^2u}{\partial y^2}
 \right)
 =
 0
-}
 ```
 
 ### y-Momentum Equation
@@ -114,7 +102,6 @@ v\frac{\partial u}{\partial y}
 The vertical momentum equation is
 
 ```math
-\boxed{
 u\frac{\partial v}{\partial x}
 +
 v\frac{\partial v}{\partial y}
@@ -123,16 +110,15 @@ v\frac{\partial v}{\partial y}
 -
 \frac{1}{Re}
 \left(
-\frac{\partial^2 v}{\partial x^2}
+\frac{\partial^2v}{\partial x^2}
 +
-\frac{\partial^2 v}{\partial y^2}
+\frac{\partial^2v}{\partial y^2}
 \right)
 =
 0
-}
 ```
 
-All required first- and second-order derivatives are calculated using PyTorch automatic differentiation.
+PyTorch automatic differentiation is used to evaluate the first- and second-order spatial derivatives required by the governing equations.
 
 ---
 
@@ -141,39 +127,51 @@ All required first- and second-order derivatives are calculated using PyTorch au
 The left, right, and bottom walls satisfy the no-slip condition:
 
 ```math
-u=0,
+u = 0,
 \qquad
-v=0.
+v = 0
 ```
 
 The moving upper lid satisfies
 
 ```math
-u=U_{\mathrm{lid}}=1,
+u = 1,
 \qquad
-v=0.
+v = 0
 ```
 
-Thus, the velocity boundary conditions are
+The complete velocity boundary conditions are
+
+### Left wall
 
 ```math
-\begin{aligned}
-u(0,y) &= 0,
-&
-v(0,y) &= 0,
-\\
-u(1,y) &= 0,
-&
-v(1,y) &= 0,
-\\
-u(x,0) &= 0,
-&
-v(x,0) &= 0,
-\\
-u(x,1) &= 1,
-&
-v(x,1) &= 0.
-\end{aligned}
+u(0,y)=0,
+\qquad
+v(0,y)=0
+```
+
+### Right wall
+
+```math
+u(1,y)=0,
+\qquad
+v(1,y)=0
+```
+
+### Bottom wall
+
+```math
+u(x,0)=0,
+\qquad
+v(x,0)=0
+```
+
+### Moving top lid
+
+```math
+u(x,1)=1,
+\qquad
+v(x,1)=0
 ```
 
 No explicit pressure-reference condition is imposed in the current implementation.
@@ -187,26 +185,30 @@ The neural network represents the mapping
 ```math
 (x,y)
 \longmapsto
-(u,v,p).
+(u,v,p)
 ```
 
-The implemented fully connected architecture contains:
+The implemented fully connected architecture has the following configuration:
 
-- **Inputs:** 2 â€” $x$ and $y$
-- **Hidden layers:** 9
-- **Neurons per hidden layer:** 30
-- **Activation function:** `Tanh`
-- **Outputs:** 3 â€” $u$, $v$, and $p$
-- **Weight initialization:** Xavier normal initialization
-- **Input preprocessing:** normalization using the domain bounds
+| Component | Configuration |
+|---|---|
+| Inputs | `x`, `y` |
+| Hidden layers | 9 |
+| Neurons per hidden layer | 30 |
+| Activation function | `Tanh` |
+| Outputs | `u`, `v`, `p` |
+| Weight initialization | Xavier normal |
+| Input preprocessing | Domain-based normalization |
 
-Although the implementation parameter is named `n_layer=8`, the network construction first creates one hidden layer and then adds eight additional hidden layers. The resulting network therefore contains **9 hidden layers in total**.
+The implementation parameter is written as `n_layer=8`. However, the network construction first creates one hidden layer and then adds eight additional hidden layers.
+
+Therefore, the implemented network contains **9 hidden layers in total**.
 
 ---
 
 ## 5. Physics-Informed Residuals
 
-Three PDE residuals are evaluated at interior collocation points.
+The governing equations are incorporated directly into the training objective through residual functions evaluated at the interior collocation points.
 
 ### Continuity Residual
 
@@ -215,7 +217,7 @@ r_c
 =
 \frac{\partial u}{\partial x}
 +
-\frac{\partial v}{\partial y}.
+\frac{\partial v}{\partial y}
 ```
 
 ### x-Momentum Residual
@@ -234,7 +236,7 @@ v\frac{\partial u}{\partial y}
 \frac{\partial^2u}{\partial x^2}
 +
 \frac{\partial^2u}{\partial y^2}
-\right).
+\right)
 ```
 
 ### y-Momentum Residual
@@ -253,10 +255,48 @@ v\frac{\partial v}{\partial y}
 \frac{\partial^2v}{\partial x^2}
 +
 \frac{\partial^2v}{\partial y^2}
-\right).
+\right)
 ```
 
-The corresponding PDE loss is
+The individual physics-informed loss components are defined from the mean squared residuals.
+
+For the continuity equation:
+
+```math
+\mathcal{L}_{c}
+=
+\frac{1}{N_f}
+\sum_{i=1}^{N_f}
+\left[
+r_c(x_i,y_i)
+\right]^2
+```
+
+For the x-momentum equation:
+
+```math
+\mathcal{L}_{x}
+=
+\frac{1}{N_f}
+\sum_{i=1}^{N_f}
+\left[
+r_x(x_i,y_i)
+\right]^2
+```
+
+For the y-momentum equation:
+
+```math
+\mathcal{L}_{y}
+=
+\frac{1}{N_f}
+\sum_{i=1}^{N_f}
+\left[
+r_y(x_i,y_i)
+\right]^2
+```
+
+The total PDE loss is therefore
 
 ```math
 \mathcal{L}_{\mathrm{PDE}}
@@ -265,67 +305,44 @@ The corresponding PDE loss is
 +
 \mathcal{L}_{x}
 +
-\mathcal{L}_{y},
-```
-
-where
-
-```math
-\mathcal{L}_{c}
-=
-\operatorname{MSE}(r_c),
-```
-
-```math
-\mathcal{L}_{x}
-=
-\operatorname{MSE}(r_x),
-```
-
-and
-
-```math
 \mathcal{L}_{y}
-=
-\operatorname{MSE}(r_y).
 ```
 
 ---
 
 ## 6. Boundary-Condition Loss
 
-The velocity boundary-condition loss is
+The velocity boundary-condition loss is based on the differences between the predicted and prescribed velocity components:
 
 ```math
 \mathcal{L}_{\mathrm{BC}}
 =
-\operatorname{MSE}
-\left(
-u_{\theta}-u_{\mathrm{BC}}
-\right)
+\frac{1}{N_b}
+\sum_{i=1}^{N_b}
+\left[
+u_{\theta}(x_i,y_i)-u_{\mathrm{BC},i}
+\right]^2
 +
-\operatorname{MSE}
-\left(
-v_{\theta}-v_{\mathrm{BC}}
-\right).
+\frac{1}{N_b}
+\sum_{i=1}^{N_b}
+\left[
+v_{\theta}(x_i,y_i)-v_{\mathrm{BC},i}
+\right]^2
 ```
 
-The total training objective is
+The complete training objective is
 
 ```math
-\boxed{
 \mathcal{L}
 =
 \mathcal{L}_{\mathrm{BC}}
 +
 \mathcal{L}_{\mathrm{PDE}}
-}
 ```
 
-or, equivalently,
+or equivalently,
 
 ```math
-\boxed{
 \mathcal{L}
 =
 \mathcal{L}_{\mathrm{BC}}
@@ -335,14 +352,13 @@ or, equivalently,
 \mathcal{L}_{x}
 +
 \mathcal{L}_{y}
-}
 ```
 
 ---
 
 ## 7. Training-Point Sampling
 
-Latin Hypercube Sampling (LHS) is used to generate both interior and boundary training points.
+Latin Hypercube Sampling (LHS) is used to generate the training points.
 
 | Point Set | Number of Points |
 |---|---:|
@@ -353,56 +369,57 @@ Latin Hypercube Sampling (LHS) is used to generate both interior and boundary tr
 | Moving top lid | 500 |
 | **Total boundary points** | **2,000** |
 
-The collocation points enforce the governing equations throughout the two-dimensional flow domain.
+The interior collocation points are used to enforce the governing equations throughout the two-dimensional domain.
 
 ---
 
 ## 8. Optimization Strategy
 
-Training is performed in two stages.
+Training is performed sequentially using two optimizers.
 
-### Stage 1 â€” Adam
+### Stage 1 - Adam
 
-The first stage uses
+The first optimization stage uses:
 
-- Optimizer: Adam
+- Optimizer: `Adam`
 - Learning rate: `0.001`
 - Iterations: `1000`
 
-### Stage 2 â€” L-BFGS
+### Stage 2 - L-BFGS
 
-The second stage uses PyTorch's L-BFGS optimizer with
+The second optimization stage uses PyTorch's L-BFGS optimizer with:
 
 - Maximum iterations: `10000`
 - Maximum function evaluations: `10000`
 - History size: `100`
 - Line search: `strong_wolfe`
 
-The L-BFGS stage further minimizes the combined PDE and boundary-condition residuals after the initial Adam training stage.
+The L-BFGS stage further minimizes the combined physics-informed and boundary-condition losses after the initial Adam optimization stage.
 
 ---
 
 ## 9. Predicted Flow Field
 
-The trained PINN is evaluated on a
+After training, the PINN is evaluated on a Cartesian grid with
 
 ```math
-100\times100
+100 \times 100
 ```
 
-Cartesian grid covering the cavity.
+evaluation points.
 
-The generated visualization contains:
+The resulting visualization contains:
 
-1. velocity magnitude and streamlines;
-2. horizontal velocity $u$;
-3. vertical velocity $v$;
-4. pressure contours;
-5. boundary-condition and PDE loss histories.
+- velocity magnitude and streamlines;
+- horizontal velocity `u`;
+- vertical velocity `v`;
+- pressure contours;
+- boundary-condition loss history;
+- PDE loss history.
 
 ![Lid-driven cavity PINN results](figures/lid-driven-cavity-results.png)
 
-The predicted velocity field develops a dominant recirculating motion inside the cavity, driven by the moving upper wall.
+The predicted velocity field develops a dominant recirculating structure inside the cavity as a consequence of the moving upper wall.
 
 ---
 
@@ -411,32 +428,32 @@ The predicted velocity field develops a dominant recirculating motion inside the
 The present formulation does not impose an explicit pressure reference such as
 
 ```math
-p(x_0,y_0)=0.
+p(x_0,y_0)=0
 ```
 
-For incompressible Navierâ€“Stokes flow, the momentum equations determine pressure through its spatial gradients:
+For incompressible Navier-Stokes flow, the momentum equations constrain pressure through its spatial gradients:
 
 ```math
-\nabla p.
+\nabla p
 ```
 
-Therefore, the pressure field is defined only up to an arbitrary additive constant:
+Therefore, adding a spatially constant value to the pressure field does not change the pressure gradients:
 
 ```math
 p^{*}(x,y)
 =
-p(x,y)+C.
+p(x,y)+C
 ```
 
 Consequently, the absolute pressure level shown in the visualization should not be interpreted as a uniquely defined reference pressure.
 
-The regions near the upper corners should also be interpreted carefully because the classical lid-driven cavity problem contains an abrupt transition between the moving top wall and the stationary side walls.
+The upper-corner regions should also be interpreted carefully because the moving lid meets the stationary side walls at these locations.
 
 ---
 
 ## 11. Training-Loss History
 
-The implementation separately records:
+The implementation records:
 
 - boundary-condition loss;
 - continuity residual loss;
@@ -444,9 +461,9 @@ The implementation separately records:
 - y-momentum residual loss;
 - total PDE loss.
 
-The figure displays the principal boundary-condition and PDE loss histories on a logarithmic scale.
+The generated figure displays the principal boundary-condition and PDE loss histories on a logarithmic scale.
 
-Because L-BFGS can evaluate its closure multiple times during an optimization step, the plotted loss-history index is more precisely interpreted as a sequence of loss/closure evaluations rather than a strict count of independent optimizer updates.
+Because L-BFGS can evaluate its closure multiple times during optimization, the horizontal index of the recorded loss history is more accurately interpreted as a sequence of loss-function evaluations rather than a strict count of independent optimizer updates.
 
 ---
 
@@ -465,7 +482,7 @@ The implementation uses:
 - Adam
 - L-BFGS
 
-CUDA acceleration is used automatically when an available GPU is detected.
+CUDA acceleration is selected automatically when an available GPU is detected.
 
 ---
 
@@ -473,28 +490,39 @@ CUDA acceleration is used automatically when an available GPU is detected.
 
 ```text
 02-lid-driven-cavity-navier-stokes/
-â”œâ”€â”€ README.md
-â”œâ”€â”€ lid-driven-cavity-pinn.ipynb
-â””â”€â”€ figures/
-    â””â”€â”€ lid-driven-cavity-results.png
+|-- README.md
+|-- lid-driven-cavity-pinn.ipynb
+`-- figures/
+    `-- lid-driven-cavity-results.png
 ```
 
-The notebook contains the complete workflow from point generation and neural-network construction to physics-informed training, flow-field prediction, visualization, and model-state saving.
+The notebook contains the complete workflow, including:
+
+- training-point generation;
+- neural-network construction;
+- automatic differentiation;
+- physics-informed residual evaluation;
+- boundary-condition enforcement;
+- Adam optimization;
+- L-BFGS optimization;
+- flow-field prediction;
+- visualization;
+- model-state saving.
 
 ---
 
 ## 14. Methodological Notes
 
-This project demonstrates a PINN formulation for the steady incompressible Navierâ€“Stokes equations at $Re=100$.
+This project demonstrates a Physics-Informed Neural Network formulation for the steady incompressible Navier-Stokes equations at `Re = 100`.
 
 The current implementation does not include:
 
 - an independent CFD reference solution;
-- Ghia-type centerline benchmark data;
+- centerline benchmark data;
 - quantitative velocity-error metrics;
-- a separately validated pressure field.
+- an independently validated pressure field.
 
-Accordingly, the results should be interpreted as **physics-informed flow predictions demonstrating qualitative behavior**, rather than as a fully benchmark-validated CFD solution.
+Therefore, the presented results should be interpreted as **physics-informed flow predictions demonstrating qualitative physical behavior**, rather than as a fully benchmark-validated CFD solution.
 
 ---
 
@@ -503,16 +531,17 @@ Accordingly, the results should be interpreted as **physics-informed flow predic
 Possible future developments include:
 
 - comparison with established lid-driven cavity benchmark data;
-- centerline $u$- and $v$-velocity validation;
-- relative error analysis against a CFD reference solution;
+- centerline velocity validation;
+- quantitative error analysis against a CFD reference solution;
 - explicit pressure-gauge enforcement;
 - adaptive residual-based sampling;
 - improved treatment of the upper-corner regions;
-- loss-component weighting strategies;
+- adaptive loss weighting;
 - Reynolds-number parameter studies;
 - higher-Reynolds-number cavity flows;
 - alternative PINN architectures;
-- domain decomposition and adaptive PINN methods.
+- domain decomposition;
+- adaptive PINN methods.
 
 ---
 
